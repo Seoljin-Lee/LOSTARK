@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>LOSTARK CARD COLLECTION LIST</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    h2 {
+      margin: 20px;
+    }
+
+    .search-bar {
+      position: sticky;
+      top: 0;
+      background-color: white;
+      padding: 10px 20px;
+      z-index: 1000;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .search-bar input {
+      padding: 8px;
+      font-size: 16px;
+      width: 300px;
+    }
+
+    #moveBtn {
+      padding: 6px 12px;
+      border: 1px solid #ccc;
+      background: #f4f4f4;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .filter-btn {
+      padding: 6px 12px;
+      border: 1px solid #ccc;
+      background: #f4f4f4;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .filter-btn.active {
+      background: dodgerblue;
+      color: white;
+    }
+
+    .image-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 20px;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 200px;
+    }
+
+    .img-wrap {
+      position: relative;
+      width: 200px;
+      height: 309.6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .img-wrap.highlight::after {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; right: 0; bottom: 0;
+      border: 4px solid dodgerblue;
+      box-sizing: border-box;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .card img {
+      width: 200px;
+      height: 309.6px;
+      opacity: 0.2;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card img.active {
+      opacity: 1.0;
+    }
+
+    .card-name {
+      margin-top: 5px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    /* === 보유현황 버튼 === */
+    .owned-status-btn {
+      position: fixed;
+      top: 24px;
+      right: 30px;
+      background: rgba(255,255,255,0.95);
+      border: 2px solid #448aff;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 15px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      z-index: 1100;
+      min-width: 180px;
+      text-align: right;
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+    .owned-status-btn:active {
+      box-shadow: 0 0 0 2px #448aff55;
+    }
+    .owned-status-title {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .owned-status-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .owned-status-list li {
+      margin-bottom: 2px;
+      font-size: 14px;
+    }
+    .owned-status-list li b {
+      margin-left: 4px;
+    }
+
+.filter-group {
+  display: flex;
+  gap: 5px;
+  margin-right: 10px;
+}
+#gradeFilterGroup {
+  border-right: 1px solid #eee;
+  padding-right: 10px;
+}
+
+  </style>
+</head>
+<body>
+
+  <!-- 보유현황 버튼 -->
+<button class="owned-status-btn" id="ownedStatus">
+  <span class="owned-status-title">보유 카드 현황</span>
+  <span id="ownedStatusTableWrap"></span>
+</button>
+
+  <h2>LOSTARK CARD COLLECTION LIST</h2>
+
+<div class="search-bar">
+  <input type="text" id="searchInput" placeholder="카드 인물 이름 검색..." />
+  
+<button id="moveBtn">이동</button>
+  
+  <div class="filter-group" id="gradeFilterGroup">
+    <button class="filter-btn active" data-grade="all">전체</button>
+    <button class="filter-btn" data-grade="legend">전설</button>
+    <button class="filter-btn" data-grade="hero">영웅</button>
+    <button class="filter-btn" data-grade="rare">희귀</button>
+    <button class="filter-btn" data-grade="high">고급</button>
+    <button class="filter-btn" data-grade="general">일반</button>
+  </div>
+
+  <div class="filter-group" id="ownFilterGroup">
+    <button class="filter-btn active" data-own="all">전체</button>
+    <button class="filter-btn" data-own="owned">보유중</button>
+    <button class="filter-btn" data-own="notowned">미보유중</button>
+  </div>
+</div>
+
+  <div class="image-container" id="cardContainer"></div>
+
+  <script src="cards.js"></script>
+  <script>
+    const container = document.getElementById('cardContainer');
+    const savedState = JSON.parse(localStorage.getItem('cardVisibility') || {});
+
+    // 카드 그리기
+    imageFiles.forEach(([filename, name]) => {
+      const cardDiv = document.createElement('div');
+      cardDiv.className = 'card';
+
+      const grade = filename.split('_')[0];
+      cardDiv.dataset.grade = grade;
+
+      // img-wrap 생성
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'img-wrap';
+
+      const img = document.createElement('img');
+      img.src = filename;
+      img.alt = name;
+      img.dataset.filename = filename;
+      img.dataset.name = name.toLowerCase();
+
+      if (savedState[filename]) {
+        img.classList.add('active');
+      }
+
+      img.addEventListener('click', () => {
+        img.classList.toggle('active');
+        savedState[filename] = img.classList.contains('active');
+        localStorage.setItem('cardVisibility', JSON.stringify(savedState));
+        updateOwnedStatus(); // 보유현황 갱신
+      });
+
+      imgWrap.appendChild(img);
+
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'card-name';
+      nameDiv.textContent = name;
+
+      cardDiv.appendChild(imgWrap);
+      cardDiv.appendChild(nameDiv);
+      container.appendChild(cardDiv);
+    });
+
+    // 검색 및 highlight
+    const searchInput = document.getElementById('searchInput');
+    const moveBtn = document.getElementById('moveBtn');
+
+    searchInput.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        moveBtn.click();
+      }
+    });
+
+    let lastSearch = '';
+    let lastIndex = 0;
+
+    // 검색 입력 highlight (.img-wrap에 적용)
+    searchInput.addEventListener('input', () => {
+      lastSearch = '';
+      lastIndex = 0;
+      const query = searchInput.value.trim().toLowerCase();
+
+      document.querySelectorAll('.card').forEach(card => {
+        const name = card.querySelector('img').dataset.name;
+        if (query && name.includes(query)) {
+          card.querySelector('.img-wrap').classList.add('highlight');
+        } else {
+          card.querySelector('.img-wrap').classList.remove('highlight');
+        }
+      });
+      // 검색어가 없거나 매칭이 없으면 highlight 없음
+    });
+
+    // 이동 버튼(포함되는 이미지 순환, .img-wrap에 highlight)
+    moveBtn.addEventListener('click', () => {
+      const query = searchInput.value.trim().toLowerCase();
+      if (!query) return;
+
+      const cards = Array.from(document.querySelectorAll('.card'));
+      const matched = cards.filter(card =>
+        card.querySelector('img').dataset.name.includes(query)
+      );
+
+      if (lastSearch !== query) {
+        lastIndex = 0;
+        lastSearch = query;
+      }
+
+      // highlight 모두 해제
+      document.querySelectorAll('.img-wrap').forEach(wrap => wrap.classList.remove('highlight'));
+
+      if (matched.length > 0) {
+        let targetCard;
+        if (lastIndex >= matched.length) lastIndex = 0;
+        targetCard = matched[lastIndex];
+        lastIndex++;
+
+        if (targetCard) {
+          targetCard.querySelector('.img-wrap').classList.add('highlight');
+          targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+      // else: 매칭 없으면 highlight 없음
+    });
+
+// 등급 및 보유 필터 상태 추적
+let selectedGrade = 'all';
+let selectedOwn = 'all';
+
+// 등급 필터 (한 번에 하나만 선택)
+document.querySelectorAll('#gradeFilterGroup .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#gradeFilterGroup .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedGrade = btn.dataset.grade || 'all';
+    applyFilters();
+  });
+});
+
+// 보유여부 필터 (한 번에 하나만 선택)
+document.querySelectorAll('#ownFilterGroup .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#ownFilterGroup .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedOwn = btn.dataset.own || 'all';
+    applyFilters();
+  });
+});
+
+// 실제 카드에 필터 적용
+function applyFilters() {
+  document.querySelectorAll('.card').forEach(card => {
+    const grade = card.dataset.grade;
+    const img = card.querySelector('img');
+    let show = true;
+
+    // 등급 필터
+    if (selectedGrade !== 'all' && grade !== selectedGrade) show = false;
+
+    // 보유여부 필터
+    if (selectedOwn === 'owned' && !img.classList.contains('active')) show = false;
+    if (selectedOwn === 'notowned' && img.classList.contains('active')) show = false;
+
+    card.style.display = show ? 'flex' : 'none';
+  });
+}
+
+    // 보유현황 집계 & 표시
+function updateOwnedStatus() {
+  // 등급별 총 카드 개수 구하기
+  const totalCounts = {
+    all: 0, legend: 0, hero: 0, rare: 0, high: 0, general: 0
+  };
+  // 등급별 보유(활성화) 개수
+  const ownedCounts = {
+    all: 0, legend: 0, hero: 0, rare: 0, high: 0, general: 0
+  };
+
+  document.querySelectorAll('.card').forEach(card => {
+    const grade = card.dataset.grade;
+    totalCounts.all += 1;
+    if (totalCounts[grade] !== undefined) totalCounts[grade] += 1;
+
+    const img = card.querySelector('img');
+    if (img.classList.contains('active')) {
+      ownedCounts.all += 1;
+      if (ownedCounts[grade] !== undefined) ownedCounts[grade] += 1;
+    }
+  });
+
+  let html = `
+    <ul class="owned-status-list">
+      <li>전체 <b>${ownedCounts.all} / ${totalCounts.all}</b></li>
+      <li>전설 <b>${ownedCounts.legend} / ${totalCounts.legend}</b></li>
+      <li>영웅 <b>${ownedCounts.hero} / ${totalCounts.hero}</b></li>
+      <li>희귀 <b>${ownedCounts.rare} / ${totalCounts.rare}</b></li>
+      <li>고급 <b>${ownedCounts.high} / ${totalCounts.high}</b></li>
+      <li>일반 <b>${ownedCounts.general} / ${totalCounts.general}</b></li>
+    </ul>`;
+
+  document.getElementById('ownedStatusTableWrap').innerHTML = html;
+  document.getElementById('ownedStatusTableWrap').style.display = 'inline';
+}
+// 현황 토글
+let ownedStatusVisible = true;
+document.getElementById('ownedStatus').addEventListener('click', function(e) {
+  ownedStatusVisible = !ownedStatusVisible;
+  document.getElementById('ownedStatusTableWrap').style.display = ownedStatusVisible ? 'inline' : 'none';
+  e.stopPropagation();
+});
+
+// 페이지 로드시 반드시 현황 갱신
+updateOwnedStatus();
+
+
+  </script>
+</body>
+</html>
