@@ -192,8 +192,8 @@
   <script src="cards.js"></script>
   <script>
     const container = document.getElementById('cardContainer');
-    const savedState = JSON.parse(localStorage.getItem('cardVisibility') || {});
-
+    const savedRaw = localStorage.getItem('cardVisibility');
+    const savedState = savedRaw ? JSON.parse(savedRaw) : {};
     // 카드 그리기
     imageFiles.forEach(([filename, name]) => {
       const cardDiv = document.createElement('div');
